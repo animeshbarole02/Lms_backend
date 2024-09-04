@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,22 +23,21 @@ public class Issuance {
     @Column(name = "user_id")
     private Long userId;
 
-
     @Column(name = "book_id")
     private Long bookId;
 
-    @Column(name = "issue_at")
-    private Timestamp issuedAt;
+    @Column(name = "issued_at")
+    private LocalDateTime issuedAt;
 
-    @Column(name = "return_at")
-    private Timestamp returnedAt;
+    @Column(name = "returned_at")
+    private LocalDateTime returnedAt;
 
-
+    @Column(name = "expected_return")
+    private LocalDateTime expectedReturn;
 
     private String status;
 
     @Column(name = "issuance_type")
-
     private String issuanceType;
 
     @Column(name = "created_at", updatable = false)
@@ -50,9 +48,5 @@ public class Issuance {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-
     // Getters and Setters
-
-
-
 }

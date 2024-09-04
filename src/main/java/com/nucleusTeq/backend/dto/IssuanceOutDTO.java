@@ -1,36 +1,31 @@
 package com.nucleusTeq.backend.dto;
 
-import lombok.AllArgsConstructor;
+import com.nucleusTeq.backend.entities.Books;
+import com.nucleusTeq.backend.entities.Users;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class IssuanceDTO {
+public class IssuanceOutDTO {
 
     private Long id;
 
     @NotNull(message = "User cannot be null")
-    private Long userId;
+    private Users user;
 
     @NotNull(message = "Book cannot be null")
-    private Long bookId;
+    private Books book;
 
     private LocalDateTime issuedAt;
 
     private LocalDateTime returnedAt;
 
-
+    @NotNull(message = "Expected Return cannot be null")
     private LocalDateTime expectedReturn;
-
 
     private String status;
 
-    @NotEmpty(message = "Issuance Type cannot be empty")
     private String issuanceType;
 }

@@ -12,7 +12,9 @@ public class LoginResponse {
 
     private String jwtToken;
     private String email;
+    private  String name;
     private  String role;
     private  Long id;
+
 
 }

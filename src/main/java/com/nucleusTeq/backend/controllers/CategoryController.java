@@ -5,11 +5,11 @@ package com.nucleusTeq.backend.controllers;
 import com.nucleusTeq.backend.dto.CategoryDTO;
 import com.nucleusTeq.backend.entities.Category;
 import com.nucleusTeq.backend.services.ICategoryService;
-import jakarta.persistence.EntityNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +25,7 @@ public class CategoryController {
 
 
 
-   @CrossOrigin
+    @CrossOrigin
     @GetMapping("/getAll")
     public ResponseEntity<List<CategoryDTO>> fetchCategories(){
 
@@ -61,29 +61,44 @@ public class CategoryController {
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-    }
 
 
-    @CrossOrigin
-    @GetMapping("/name/{name}")
-    public ResponseEntity<Category> getCategoryByName(@PathVariable String name) {
-        try {
-            Category category = iCategoryService.getCategoryByName(name);
-            return ResponseEntity.ok(category);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
-    }
+   }
 
+   @CrossOrigin
+   @GetMapping ("/name/{name}")
+
+   public  ResponseEntity<Category> getCategoryByName(@PathVariable String name)
+   {
+        Category category = iCategoryService.getCategoryByName(name);
+       return ResponseEntity.status(HttpStatus.OK).body(category);
+
+   }
+
+   @CrossOrigin
+   @PutMapping("/update/{id}")
+   public ResponseEntity<String>  updateCategory(@PathVariable Long id,@RequestBody CategoryDTO categoryDTO) {
+         String message = iCategoryService.updateCategory(id,categoryDTO);
+         return  ResponseEntity.status(HttpStatus.OK).body(message);
+   }
 
 
     @CrossOrigin
     @GetMapping("/list")
-    public Page<Category> getCategories(
+    public ResponseEntity<Page<Category>> getCategories(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "search", required = false) String search
     ){
-        return iCategoryService.getCategories(page, size, search);
+        Page<Category> categories = iCategoryService.getCategories(page, size, search);
+        return ResponseEntity.status(HttpStatus.OK).body(categories);
+    }
+
+
+    @CrossOrigin
+    @GetMapping("/count")
+    public ResponseEntity<Long> getCategoryCount() {
+        long count = iCategoryService.getCategoryCount();
+        return ResponseEntity.status(HttpStatus.OK).body(count);
     }
 }

@@ -5,11 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 @Data
+public class UsersOutDTO {
 
-public class LoginDTO {
-
-    private  String usernameOrPhoneNumber;
-    private  String password;
-
+   Long id;
+   String name;
+   String email;
+   String phoneNumber;
+   String role;
 }

@@ -2,12 +2,16 @@ package com.nucleusTeq.backend.services.Impl;
 
 
 import com.nucleusTeq.backend.dto.BooksDTO;
+import com.nucleusTeq.backend.dto.BooksOutDTO;
 import com.nucleusTeq.backend.entities.Books;
 import com.nucleusTeq.backend.entities.Category;
+import com.nucleusTeq.backend.entities.Users;
 import com.nucleusTeq.backend.exception.ResourceNotFoundException;
 import com.nucleusTeq.backend.mapper.BooksMapper;
+import com.nucleusTeq.backend.mapper.UsersMapper;
 import com.nucleusTeq.backend.repositories.BooksRepository;
 import com.nucleusTeq.backend.repositories.CategoryRepository;
+import com.nucleusTeq.backend.repositories.IssuanceRepository;
 import com.nucleusTeq.backend.services.IBooksService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +19,8 @@ import org.springframework.boot.context.config.ConfigDataResourceNotFoundExcepti
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -25,9 +31,15 @@ import java.util.Optional;
 @AllArgsConstructor
 public class BooksServiceImp implements IBooksService {
 
-    @Autowired
-    private final BooksRepository booksRepository;
 
+    @Autowired
+    private IssuanceRepository issuanceRepository;
+
+    @Autowired
+    private  BooksRepository booksRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @Override
     public  String createBook(List<BooksDTO> booksDTOList){
@@ -47,15 +59,32 @@ public class BooksServiceImp implements IBooksService {
 
     @Override
     public  String deleteBook(Long id) {
+
+        Optional<Books> book = booksRepository.findById(id);
+        if (book.isEmpty()) {
+            return  "Book not found";
+        }
+
+        boolean hasIssuedRecord = issuanceRepository.existsByBookIdAndStatus(id, "Issued");
+
+        if (hasIssuedRecord) {
+            return  "Book cannot be deleted as it is currently issued.";
+        }
+
+        issuanceRepository.deleteByBookIdAndStatus(id, "Returned");
+
         booksRepository.deleteById(id);
-        return "Book deleted successfully with ID: " + id;
+        return "Book deleted successfully";
 
     }
 
     @Override
-    public  String updateBook(Long id , BooksDTO booksDTO){
+    public String updateBook(Long id , BooksDTO booksDTO){
 
         Optional<Books> optionalBooks = booksRepository.findById(id);
+
+        System.out.println(id);
+        System.out.println(booksDTO.getCategoryId());
 
         if(optionalBooks.isPresent()) {
             Books existingBook = optionalBooks.get();
@@ -73,17 +102,44 @@ public class BooksServiceImp implements IBooksService {
     }
 
 
+
+
     @Override
-    public Page<Books> getBooks(int page, int size, String search) {
+    public Page<BooksOutDTO> getBooks(int page, int size, String search) {
         Pageable pageable = PageRequest.of(page, size);
 
+        Page<Books> booksPage;
+
         if (search != null && !search.isEmpty()) {
-
-            return booksRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(search, search, pageable);
+            booksPage = booksRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(search, search, pageable);
         } else {
-
-            return booksRepository.findAll(pageable);
+            booksPage = booksRepository.findAll(pageable);
         }
+
+        // Map the Page<Books> to Page<BooksOutDTO> using the mapper and pass categoryRepository
+        return booksPage.map(books -> BooksMapper.mapToBooksOutDTO(books, categoryRepository));
+    }
+
+    @Override
+    public BooksOutDTO getBookByTitle(String title) {
+
+        Optional<Books> booksOptional = booksRepository.findByTitle(title);
+
+        if (booksOptional.isPresent()) {
+            // If user is present, convert to UsersOutDTO and return
+            Books book = booksOptional.get();
+            return BooksMapper.mapToBooksOutDTO(book, categoryRepository);
+        } else {
+            // If user is not present, throw an exception
+            throw new UsernameNotFoundException("Book not found with title: " + title);
+        }
+
+    }
+
+
+    @Override
+    public long getTotalBookCount() {
+        return booksRepository.count();
     }
 
 }

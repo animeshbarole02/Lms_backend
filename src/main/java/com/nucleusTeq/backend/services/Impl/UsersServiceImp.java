@@ -1,6 +1,7 @@
 package com.nucleusTeq.backend.services.Impl;
 
 import com.nucleusTeq.backend.dto.UsersDTO;
+import com.nucleusTeq.backend.dto.UsersOutDTO;
 import com.nucleusTeq.backend.entities.Users;
 import com.nucleusTeq.backend.mapper.UsersMapper;
 import com.nucleusTeq.backend.repositories.UsersRepository;
@@ -8,6 +9,9 @@ import com.nucleusTeq.backend.services.IUsersService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -69,18 +73,32 @@ public class UsersServiceImp implements IUsersService , UserDetailsService {
     }
 
     @Override
-   public UsersDTO updateUser(Long id , UsersDTO usersDTO){
+    public String updateUser(Long id, UsersDTO usersDTO) {
         Users existingUser = usersRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
 
-        existingUser.setName(usersDTO.getName());
-        existingUser.setEmail(usersDTO.getEmail());
-        existingUser.setPhoneNumber(usersDTO.getPhoneNumber());
-        existingUser.setRole(usersDTO.getRole());
-        existingUser.setPassword(usersDTO.getPassword());
+        // Only update fields that are not null in the incoming DTO
+        if (usersDTO.getName() != null) {
+            existingUser.setName(usersDTO.getName());
+        }
+        if (usersDTO.getEmail() != null) {
+            existingUser.setEmail(usersDTO.getEmail());
+        }
+        if (usersDTO.getPhoneNumber() != null) {
+            existingUser.setPhoneNumber(usersDTO.getPhoneNumber());
+        }
+        // Optionally check for other fields if needed
+        // if (usersDTO.getRole() != null) {
+        //     existingUser.setRole(usersDTO.getRole());
+        // }
+        // if (usersDTO.getPassword() != null) {
+        //     existingUser.setPassword(usersDTO.getPassword());
+        // }
 
         Users updatedUser = usersRepository.save(existingUser);
-        return UsersMapper.mapToUsersDTO(updatedUser);
+        UsersMapper.mapToUsersDTO(updatedUser);
+
+        return "User updated successfully with ID: " + updatedUser.getId();
     }
 
     @Override
@@ -88,6 +106,21 @@ public class UsersServiceImp implements IUsersService , UserDetailsService {
           usersRepository.deleteById(id);
 
           return  "User deleted successfully with ID:" + id;
+    }
+
+
+    @Override
+   public Page<UsersOutDTO> getUsers(int page, int size, String search) {
+        Pageable pageable = PageRequest.of(page,size);
+        Page<Users> usersPage;
+        if(search!=null && !search.isEmpty()) {
+            usersPage =  usersRepository.findByNameContainingIgnoreCaseAndRoleEquals(search,"USER",pageable);
+        }
+        else {
+            usersPage =   usersRepository.findByRoleEquals("USER", pageable);
+        }
+
+        return  usersPage.map(users -> UsersMapper.maptoUsersOutDTO(users,usersRepository));
     }
 
     @Override
@@ -104,9 +137,7 @@ public class UsersServiceImp implements IUsersService , UserDetailsService {
         Users userInfo = userOptional
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with identifier: " + usernameOrPhoneNumber));
 
-//        List<GrantedAuthority> authorities = userInfo.getRole().stream()
-//                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
-//                .collect(Collectors.toList());
+
 
         List<GrantedAuthority> grantedAuthorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_"+userInfo.getRole()));
 
@@ -129,6 +160,31 @@ public class UsersServiceImp implements IUsersService , UserDetailsService {
         }
 
         return user;
+    }
+
+
+    @Override
+  public UsersOutDTO getUserByMobile(String number) {
+
+
+        Optional<Users> userOptional = usersRepository.findByPhoneNumber(number);
+
+        // Check if the user is present
+        if (userOptional.isPresent()) {
+            // If user is present, convert to UsersOutDTO and return
+            Users user = userOptional.get();
+            return UsersMapper.maptoUsersOutDTO(user, usersRepository);
+        } else {
+            // If user is not present, throw an exception
+            throw new UsernameNotFoundException("User not found with phone number: " + number);
+        }
+
+
+    }
+
+    @Override
+    public long getUserCount() {
+        return usersRepository.count();
     }
 
 

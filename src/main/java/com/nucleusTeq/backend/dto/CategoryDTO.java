@@ -9,8 +9,7 @@ import javax.validation.constraints.NotEmpty;
 
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+
 public class CategoryDTO {
 
 

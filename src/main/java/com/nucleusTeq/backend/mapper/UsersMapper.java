@@ -1,7 +1,13 @@
 package com.nucleusTeq.backend.mapper;
 
 import com.nucleusTeq.backend.dto.UsersDTO;
+import com.nucleusTeq.backend.dto.UsersOutDTO;
 import com.nucleusTeq.backend.entities.Users;
+import com.nucleusTeq.backend.repositories.BooksRepository;
+import com.nucleusTeq.backend.repositories.CategoryRepository;
+import com.nucleusTeq.backend.repositories.UsersRepository;
+
+import java.util.Objects;
 
 public class UsersMapper {
 
@@ -31,5 +37,23 @@ public class UsersMapper {
         users.setRole(usersDTO.getRole());
         users.setPassword(usersDTO.getPassword());
         return users;
+    }
+
+    public  static UsersOutDTO maptoUsersOutDTO(Users users , UsersRepository usersRepository) {
+
+
+        UsersOutDTO usersOutDTO = new UsersOutDTO();
+
+
+            usersOutDTO.setId(users.getId());
+            usersOutDTO.setEmail(users.getEmail());
+            usersOutDTO.setName(users.getName());
+            usersOutDTO.setPhoneNumber(users.getPhoneNumber());
+
+
+            usersOutDTO.setRole(users.getRole());
+
+
+        return  usersOutDTO;
     }
 }

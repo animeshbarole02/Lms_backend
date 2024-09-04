@@ -42,10 +42,10 @@ public  class SecurityConfig  {
         http.authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
 
-                                .requestMatchers("/api/v1/users/**","/api/v1/categories/**").hasRole("ADMIN")
-                                .requestMatchers("api/v1/issuances/**").hasRole("USER")
+                                .requestMatchers("/api/v1/categories/**","/api/v1/issuances/**","/api/v1/users/**","/api/v1/books/**").hasRole("ADMIN")
+                                .requestMatchers("/api/v1/user/**").hasRole("USER")
 
-                                .requestMatchers("/api/v1/**","/api/v1/books/**").permitAll()
+                                .requestMatchers("/api/v1/**").permitAll()
 
 
 

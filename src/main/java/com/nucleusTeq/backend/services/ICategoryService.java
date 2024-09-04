@@ -17,10 +17,14 @@ public interface ICategoryService {
 
      Category getCategoryById(Long id);
 
-     Category getCategoryByName(String name);
-
      Page<Category> getCategories(int page , int size,String search);
 
      String deleteCategory(Long id);
+
+     String updateCategory(Long id,CategoryDTO categoryDTO);
+
+     Category getCategoryByName(String name);
+
+     long getCategoryCount();
 
 }

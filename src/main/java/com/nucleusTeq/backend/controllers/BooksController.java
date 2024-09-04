@@ -1,6 +1,7 @@
 package com.nucleusTeq.backend.controllers;
 
 import com.nucleusTeq.backend.dto.BooksDTO;
+import com.nucleusTeq.backend.dto.BooksOutDTO;
 import com.nucleusTeq.backend.entities.Books;
 import com.nucleusTeq.backend.services.IBooksService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,7 @@ public class BooksController {
 
 
     @CrossOrigin
-    @PutMapping("/update/{id}")
+    @PatchMapping("/update/{id}")
     public  ResponseEntity<String> updateBook(@PathVariable Long id , @RequestBody BooksDTO booksDTO) {
 
          String message  = iBooksService.updateBook(id,booksDTO);
@@ -50,11 +51,30 @@ public class BooksController {
 
     @CrossOrigin
     @GetMapping("/list")
-    public Page<Books> getBooks(
+    public Page<BooksOutDTO> getBooks(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "search", required = false) String search
     ) {
-        return iBooksService.getBooks(page, size, search);
+        return iBooksService.getBooks(page,size,search);
     }
+
+
+    @CrossOrigin
+    @GetMapping("/getByTitle/{title}")
+        public ResponseEntity<BooksOutDTO> getBookByTitle(@PathVariable String title) {
+
+          BooksOutDTO booksOutDTO = iBooksService.getBookByTitle(title);
+         return ResponseEntity.status(HttpStatus.OK).body(booksOutDTO);
+
+        }
+
+
+    @CrossOrigin
+    @GetMapping("/count")
+    public ResponseEntity<Long> getTotalBookCount() {
+        long count = iBooksService.getTotalBookCount();
+        return ResponseEntity.status(HttpStatus.OK).body(count);
+    }
+
 }
