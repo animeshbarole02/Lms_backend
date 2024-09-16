@@ -101,7 +101,7 @@ public class IssuanceServiceImp implements IIssuanceService {
                         savedIssuance.getIssuedAt().toLocalDate(),
                         savedIssuance.getExpectedReturn().toLocalDate());
 
-             //   ismsService.sendSms(user.getPhoneNumber(), message);
+                ismsService.sendSms(user.getPhoneNumber(), message);
                 return "Issuance Added Successfully";
             } else {
                 throw  new ResourceNotFoundException("No copies available for the selected book.");
