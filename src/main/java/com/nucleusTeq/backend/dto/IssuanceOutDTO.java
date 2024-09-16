@@ -3,6 +3,7 @@ package com.nucleusTeq.backend.dto;
 import com.nucleusTeq.backend.entities.Books;
 import com.nucleusTeq.backend.entities.Users;
 import lombok.Data;
+import org.springframework.security.core.userdetails.User;
 
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -12,10 +13,9 @@ public class IssuanceOutDTO {
 
     private Long id;
 
-    @NotNull(message = "User cannot be null")
+    private Long user_id;
+    private  Long book_id;
     private Users user;
-
-    @NotNull(message = "Book cannot be null")
     private Books book;
 
     private LocalDateTime issuedAt;

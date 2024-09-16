@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +45,8 @@ public class LoginController {
     public ResponseEntity<?> authenticateUser(@RequestBody LoginDTO loginDTO) {
         try {
             // Delegate authentication logic to the AuthService
+            String decodedPassword = new String(Base64.getDecoder().decode(loginDTO.getPassword()));
+            loginDTO.setPassword(decodedPassword);
             LoginResponse response = authService.authenticateUser(loginDTO);
             return ResponseEntity.ok(response);
         } catch (Exception e) {

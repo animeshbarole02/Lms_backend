@@ -6,6 +6,9 @@ import com.nucleusTeq.backend.dto.BooksOutDTO;
 import com.nucleusTeq.backend.entities.Books;
 import com.nucleusTeq.backend.entities.Category;
 import com.nucleusTeq.backend.entities.Users;
+import com.nucleusTeq.backend.exception.DataIntegrityViolationCustomException;
+import com.nucleusTeq.backend.exception.MethodNotFoundException;
+import com.nucleusTeq.backend.exception.ResourceConflictException;
 import com.nucleusTeq.backend.exception.ResourceNotFoundException;
 import com.nucleusTeq.backend.mapper.BooksMapper;
 import com.nucleusTeq.backend.mapper.UsersMapper;
@@ -14,64 +17,74 @@ import com.nucleusTeq.backend.repositories.CategoryRepository;
 import com.nucleusTeq.backend.repositories.IssuanceRepository;
 import com.nucleusTeq.backend.services.IBooksService;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.awt.print.Book;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class BooksServiceImp implements IBooksService {
 
 
-    @Autowired
-    private IssuanceRepository issuanceRepository;
 
-    @Autowired
-    private  BooksRepository booksRepository;
+    private final IssuanceRepository issuanceRepository;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+
+    private final  BooksRepository booksRepository;
+
+
+    private final CategoryRepository categoryRepository;
 
     @Override
-    public  String createBook(List<BooksDTO> booksDTOList){
+    public  String createBook(BooksDTO booksDTO){
 
-        List<Books> books = new ArrayList<>();
+        Optional<Books> existingBook = booksRepository.findByTitle(booksDTO.getTitle());
 
-        booksDTOList.forEach(booksDTO -> {
-            books.add(BooksMapper.mapToBooks(booksDTO));
-        });
+        if (existingBook.isPresent()) {
 
-        List<Books> savedBooks = booksRepository.saveAll(books);
+            throw new ResourceConflictException("Book with title '" + booksDTO.getTitle() + "' already exists.");
+        }
 
 
-       return savedBooks.size() + "Book Added SuccessFully" ;
+        Books bookToSave = BooksMapper.mapToBooks(booksDTO);
+
+
+        booksRepository.save(bookToSave);
+
+        return  "Book is Added";
     }
 
-
+    @Transactional
     @Override
     public  String deleteBook(Long id) {
 
         Optional<Books> book = booksRepository.findById(id);
         if (book.isEmpty()) {
-            return  "Book not found";
+            throw new ResourceNotFoundException("Book not found with ID: " + id);
         }
 
         boolean hasIssuedRecord = issuanceRepository.existsByBookIdAndStatus(id, "Issued");
 
         if (hasIssuedRecord) {
-            return  "Book cannot be deleted as it is currently issued.";
+            throw new MethodNotFoundException("Book cannot be deleted as it is currently issued.");
         }
 
-        issuanceRepository.deleteByBookIdAndStatus(id, "Returned");
+
+        issuanceRepository.deleteByBookId(id);
 
         booksRepository.deleteById(id);
         return "Book deleted successfully";
@@ -83,20 +96,27 @@ public class BooksServiceImp implements IBooksService {
 
         Optional<Books> optionalBooks = booksRepository.findById(id);
 
-        System.out.println(id);
-        System.out.println(booksDTO.getCategoryId());
+        if (optionalBooks.isPresent()) {
 
-        if(optionalBooks.isPresent()) {
+            Optional<Books> bookWithSameTitle = booksRepository.findByTitle(booksDTO.getTitle());
+
+            if (bookWithSameTitle.isPresent() && !bookWithSameTitle.get().getId().equals(id)) {
+
+                throw new ResourceConflictException("Book with the same title already exists.");
+            }
+
+
             Books existingBook = optionalBooks.get();
             existingBook.setTitle(booksDTO.getTitle());
             existingBook.setAuthor(booksDTO.getAuthor());
             existingBook.setCategoryId(booksDTO.getCategoryId());
             existingBook.setQuantity(booksDTO.getQuantity());
+
             booksRepository.save(existingBook);
 
-            return  "Book updated successfully with ID: " + id;
-        }else {
-            throw  new ResourceNotFoundException("Book not fount with ID : "+ id);
+            return "Book updated successfully";
+        } else {
+            throw new ResourceNotFoundException("Book not found with ID: " + id);
         }
 
     }
@@ -106,7 +126,7 @@ public class BooksServiceImp implements IBooksService {
 
     @Override
     public Page<BooksOutDTO> getBooks(int page, int size, String search) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size,Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Books> booksPage;
 
@@ -140,6 +160,11 @@ public class BooksServiceImp implements IBooksService {
     @Override
     public long getTotalBookCount() {
         return booksRepository.count();
+    }
+
+    @Override
+    public List<Books> findBooksByTitleContaining(String searchTerm) {
+        return booksRepository.findByTitleContainingIgnoreCase(searchTerm);
     }
 
 }

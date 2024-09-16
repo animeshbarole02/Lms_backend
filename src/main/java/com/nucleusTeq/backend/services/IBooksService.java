@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface IBooksService {
 
-      String createBook(List<BooksDTO> booksDTOList);
+      String createBook(BooksDTO booksDTO);
 
       String deleteBook(Long id);
 
@@ -22,4 +22,6 @@ public interface IBooksService {
       BooksOutDTO getBookByTitle(String title);
 
       long getTotalBookCount();
+
+      List<Books> findBooksByTitleContaining(String searchTerm);
 }

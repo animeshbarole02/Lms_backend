@@ -16,4 +16,5 @@ public interface UsersRepository extends JpaRepository<Users,Long> {
 
    Page<Users> findByNameContainingIgnoreCaseAndRoleEquals(String search, String role,Pageable pageable);
     Page<Users> findByRoleEquals(String role, Pageable pageable);
+    Optional<Users> findByName(String name);
 }

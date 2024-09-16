@@ -6,6 +6,8 @@ import com.nucleusTeq.backend.dto.IssuanceOutDTO;
 import com.nucleusTeq.backend.dto.UserHistoryOutDTO;
 import com.nucleusTeq.backend.entities.Books;
 import com.nucleusTeq.backend.entities.Issuance;
+import com.nucleusTeq.backend.entities.Users;
+import com.nucleusTeq.backend.exception.MethodNotFoundException;
 import com.nucleusTeq.backend.exception.ResourceNotFoundException;
 import com.nucleusTeq.backend.mapper.HistoryMapper;
 import com.nucleusTeq.backend.mapper.IssuanceMapper;
@@ -14,10 +16,13 @@ import com.nucleusTeq.backend.repositories.CategoryRepository;
 import com.nucleusTeq.backend.repositories.IssuanceRepository;
 import com.nucleusTeq.backend.repositories.UsersRepository;
 import com.nucleusTeq.backend.services.IIssuanceService;
+import com.nucleusTeq.backend.services.ISMSService;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -26,20 +31,17 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class IssuanceServiceImp implements IIssuanceService {
 
-    @Autowired
+
     private final IssuanceRepository issuanceRepository;
-
-    @Autowired
     private  final CategoryRepository categoryRepository;
-
-    @Autowired
     private final BooksRepository booksRepository;
+    private final UsersRepository usersRepository;
 
     @Autowired
-    private final UsersRepository usersRepository;
+    private ISMSService ismsService;
 
     @Override
     public List<IssuanceDTO> getAllIssuances() {
@@ -63,36 +65,54 @@ public class IssuanceServiceImp implements IIssuanceService {
 
     @Override
     public String createIssuance(IssuanceDTO issuanceDTO) {
-        // Check if an issuance already exists for the given user and book
-        // Check if an issuance already exists for the given user and book
-        Optional<Issuance> existingIssuance = issuanceRepository.findByUserIdAndBookId(issuanceDTO.getUserId(), issuanceDTO.getBookId());
 
-        // If an issuance already exists, return a message
-        if (existingIssuance.isPresent()) {
-            return "Issuance already exists for this user and book.";
-        }
 
-        // Map DTO to Entity
+
         Issuance issuance = IssuanceMapper.mapToIssuance(issuanceDTO);
 
-        // Retrieve the book and check the quantity
+
         Optional<Books> bookOpt = booksRepository.findById(issuanceDTO.getBookId());
         if (bookOpt.isPresent()) {
             Books book = bookOpt.get();
             if (book.getQuantity() > 0) {
-                // Decrease the book count
-                book.setQuantity(book.getQuantity() - 1);
-                booksRepository.save(book); // Save the updated book
 
-                // Save the issuance
-                issuanceRepository.save(issuance);
-                return "Issuance Added Successfully with ID: " + issuance.getId();
+                book.setQuantity(book.getQuantity() - 1);
+                booksRepository.save(book);
+
+
+
+
+                Issuance savedIssuance =  issuanceRepository.save(issuance);
+
+                Books booktoSend = booksRepository.findById(savedIssuance.getBookId())
+                        .orElseThrow(() -> new RuntimeException("Book not found for ID: " + savedIssuance.getBookId()));
+
+                Users user = usersRepository.findById(savedIssuance.getUserId())
+                        .orElseThrow(()->new RuntimeException("User Id is not found:"+ savedIssuance.getUserId()));
+
+                String message = String.format("\nYou have issued the book '%s'\n" +
+                                "author '%s'\n" +
+                                "From %s\n" +
+                                "To %s",
+
+
+                        booktoSend.getTitle(),
+                        booktoSend.getAuthor(),
+                        savedIssuance.getIssuedAt().toLocalDate(),
+                        savedIssuance.getExpectedReturn().toLocalDate());
+
+             //   ismsService.sendSms(user.getPhoneNumber(), message);
+                return "Issuance Added Successfully";
             } else {
-                return "No copies available for the selected book.";
+                throw  new ResourceNotFoundException("No copies available for the selected book.");
             }
         } else {
-            return "Book not found.";
+            throw new ResourceNotFoundException( "Book not found.");
         }
+
+
+
+
 
     }
 
@@ -107,7 +127,7 @@ public class IssuanceServiceImp implements IIssuanceService {
 
 
 
-            // Update only the specified fields if they are not null
+
             if (issuanceDTO.getExpectedReturn() != null) {
                 existingIssuance.setExpectedReturn(issuanceDTO.getExpectedReturn());
             }
@@ -125,16 +145,16 @@ public class IssuanceServiceImp implements IIssuanceService {
                     book.setQuantity(book.getQuantity() +1 );
                     booksRepository.save(book);
                 }else {
-                    throw  new ResourceNotFoundException("Book not found with ID :" + existingIssuance.getBookId());
+                    throw  new ResourceNotFoundException("Book not found");
                 }
 
             }
 
 
             issuanceRepository.save(existingIssuance);
-            return "Issuance updated successfully with ID: " + id;
+            return "Issuance updated successfully ";
         } else {
-            throw new ResourceNotFoundException("Issuance not found with ID: " + id);
+            throw new ResourceNotFoundException("Issuance not found ");
         }
     }
 
@@ -142,26 +162,42 @@ public class IssuanceServiceImp implements IIssuanceService {
     public String deleteIssuance(Long id) {
         // Find the issuance by ID
         Issuance issuance = issuanceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Issuance not found with ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Issuance not found " ));
 
-        // Retrieve the book associated with this issuance
+        Optional<Books> bookOpt = booksRepository.findById(issuance.getBookId());
+        if (bookOpt.isPresent()) {
+            Books book = bookOpt.get();
 
-        // Delete the issuance
+
+            book.setQuantity(book.getQuantity() + 1);
+            booksRepository.save(book);
+        } else {
+            throw new ResourceNotFoundException("Book not found ");
+        }
+
         issuanceRepository.delete(issuance);
 
-        return "Issuance deleted successfully with ID: " + id;
+        return "Issuance deleted successfully ";
     }
 
     @Override
     public Page<IssuanceOutDTO> getIssuanceList(int page, int size, String search) {
-        PageRequest pageRequest = PageRequest.of(page, size);
+        PageRequest pageRequest = PageRequest.of(page, size,Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Issuance> issuances = issuanceRepository.findAll(pageRequest); // Implement search logic if needed
 
+        Page<Issuance> issuances;
+        if (search == null || search.isEmpty()) {
+            issuances = issuanceRepository.findAll(pageRequest);
+        } else {
+            issuances = issuanceRepository.findByBookTitleOrUserName(search, pageRequest);
+        }
+
+        // Map issuances to IssuanceOutDTO
         return issuances.map(issuance -> IssuanceMapper.mapToIssuanceOutDTO(issuance, booksRepository, usersRepository));
     }
 
-    // New method to check if a user has an active issuance
+
+
 
 
     @Override

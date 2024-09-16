@@ -3,17 +3,21 @@ package com.nucleusTeq.backend.controllers;
 
 
 import com.nucleusTeq.backend.dto.CategoryDTO;
+import com.nucleusTeq.backend.dto.ResponseDTO;
 import com.nucleusTeq.backend.entities.Category;
+import com.nucleusTeq.backend.services.IBooksService;
 import com.nucleusTeq.backend.services.ICategoryService;
-
+import com.nucleusTeq.backend.services.IIssuanceService;
+import com.nucleusTeq.backend.services.IUsersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+
+import static com.nucleusTeq.backend.constants.Constants.OK_STATUS;
 
 @RestController
 @RequestMapping(value = "api/v1/categories")
@@ -23,10 +27,8 @@ public class CategoryController {
     @Autowired
     private  ICategoryService iCategoryService;
 
-
-
     @CrossOrigin
-    @GetMapping("/getAll")
+    @GetMapping("/getList")
     public ResponseEntity<List<CategoryDTO>> fetchCategories(){
 
         List<CategoryDTO> categoryDTOList = iCategoryService.fetchCategories();
@@ -36,20 +38,20 @@ public class CategoryController {
 
     @CrossOrigin
     @PostMapping(path = "/save")
-    public ResponseEntity<String> createCategories(@RequestBody List<CategoryDTO> categoryDTOList){
+    public ResponseEntity<ResponseDTO> createCategories(@RequestBody CategoryDTO categoryDTOList){
 
         String message =iCategoryService.saveCategories(categoryDTOList);
 
-        return  ResponseEntity.status(HttpStatus.CREATED).body(message);
+        return  ResponseEntity.status(HttpStatus.CREATED).body(new ResponseDTO(OK_STATUS,message));
 
     }
 
 
     @CrossOrigin
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteCategory(@PathVariable Long id) {
+    public ResponseEntity<ResponseDTO> deleteCategory(@PathVariable Long id) {
         String message = iCategoryService.deleteCategory(id);
-        return ResponseEntity.status(HttpStatus.OK).body(message);
+        return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(OK_STATUS,message));
     }
 
     @CrossOrigin
@@ -76,10 +78,10 @@ public class CategoryController {
    }
 
    @CrossOrigin
-   @PutMapping("/update/{id}")
-   public ResponseEntity<String>  updateCategory(@PathVariable Long id,@RequestBody CategoryDTO categoryDTO) {
+   @PatchMapping("/update/{id}")
+   public ResponseEntity<ResponseDTO>  updateCategory(@PathVariable Long id,@RequestBody CategoryDTO categoryDTO) {
          String message = iCategoryService.updateCategory(id,categoryDTO);
-         return  ResponseEntity.status(HttpStatus.OK).body(message);
+         return  ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(OK_STATUS,message));
    }
 
 
@@ -90,6 +92,9 @@ public class CategoryController {
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "search", required = false) String search
     ){
+
+
+
         Page<Category> categories = iCategoryService.getCategories(page, size, search);
         return ResponseEntity.status(HttpStatus.OK).body(categories);
     }
@@ -101,4 +106,7 @@ public class CategoryController {
         long count = iCategoryService.getCategoryCount();
         return ResponseEntity.status(HttpStatus.OK).body(count);
     }
+
+
+
 }

@@ -13,7 +13,7 @@ public interface ICategoryService {
 
      List<CategoryDTO> fetchCategories();
 
-     String saveCategories(List<CategoryDTO> categoryDTOS);
+     String saveCategories(CategoryDTO categoryDTOS);
 
      Category getCategoryById(Long id);
 

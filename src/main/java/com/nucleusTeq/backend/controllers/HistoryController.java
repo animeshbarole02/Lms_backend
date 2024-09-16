@@ -19,7 +19,7 @@ public class HistoryController {
     private IIssuanceService iIssuanceService;
 
     @CrossOrigin
-    @GetMapping("/userIssuanceDetails")
+    @GetMapping("/details")
     public ResponseEntity<Page<UserHistoryOutDTO>> getIssuanceDetailsByUserId(
             @RequestParam(value = "userId") Long userId,
             @RequestParam(value = "page", defaultValue = "0") int page,

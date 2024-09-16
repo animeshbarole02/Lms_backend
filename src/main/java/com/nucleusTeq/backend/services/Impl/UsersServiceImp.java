@@ -3,15 +3,23 @@ package com.nucleusTeq.backend.services.Impl;
 import com.nucleusTeq.backend.dto.UsersDTO;
 import com.nucleusTeq.backend.dto.UsersOutDTO;
 import com.nucleusTeq.backend.entities.Users;
+import com.nucleusTeq.backend.exception.MethodNotFoundException;
+import com.nucleusTeq.backend.exception.ResourceConflictException;
+import com.nucleusTeq.backend.exception.ResourceNotFoundException;
 import com.nucleusTeq.backend.mapper.UsersMapper;
+import com.nucleusTeq.backend.repositories.IssuanceRepository;
 import com.nucleusTeq.backend.repositories.UsersRepository;
+import com.nucleusTeq.backend.services.ISMSService;
 import com.nucleusTeq.backend.services.IUsersService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -27,12 +35,16 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UsersServiceImp implements IUsersService , UserDetailsService {
 
 
-    @Autowired
-    private UsersRepository usersRepository;
+    private final ISMSService ismsService;
+
+    private final UsersRepository usersRepository;
+
+
+    private final IssuanceRepository issuanceRepository;
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
@@ -40,11 +52,32 @@ public class UsersServiceImp implements IUsersService , UserDetailsService {
     @Override
     public String createUser(UsersDTO usersDTO) {
 
+        Optional<Users> userWithSameNumber = usersRepository.findByPhoneNumber(usersDTO.getPhoneNumber());
+        Optional<Users> userWithSameEmail = usersRepository.findByEmail(usersDTO.getEmail());
+
+        if (userWithSameNumber.isPresent() || userWithSameEmail.isPresent()) {
+            throw new ResourceConflictException("User with this email or phone number already exists.");
+        }
+
         Users user = UsersMapper.mapToUsers(usersDTO);
-        user.setPassword(encoder.encode(user.getPassword()));
+
+        String Password = usersDTO.getPassword();
+         user.setPassword(encoder.encode(user.getPassword()));
         Users savedUser =  usersRepository.save(user);
 
-        return "User added successfully with ID: " + savedUser.getId();
+        String message = String.format( "\nWelcome %s\n" +
+                        "Your Account is Open on Readify Library Manager\n" +
+                        "These are your login credentials\n" +
+                        "Username: %s (OR) %s\n" +
+                        "Password: %s",
+                savedUser.getName(),
+                savedUser.getPhoneNumber(),
+                savedUser.getEmail(),
+                Password);
+          ismsService.verifyNumber(savedUser.getPhoneNumber());
+         ismsService.sendSms(savedUser.getPhoneNumber(), message);
+
+        return "User added successfully ";
 
     }
 
@@ -75,43 +108,61 @@ public class UsersServiceImp implements IUsersService , UserDetailsService {
     @Override
     public String updateUser(Long id, UsersDTO usersDTO) {
         Users existingUser = usersRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
 
-        // Only update fields that are not null in the incoming DTO
-        if (usersDTO.getName() != null) {
-            existingUser.setName(usersDTO.getName());
-        }
+
         if (usersDTO.getEmail() != null) {
+            Optional<Users> userWithSameEmail = usersRepository.findByEmail(usersDTO.getEmail());
+            if (userWithSameEmail.isPresent() && !userWithSameEmail.get().getId().equals(id)) {
+                throw new ResourceConflictException("Email already exists for another user.");
+            }
             existingUser.setEmail(usersDTO.getEmail());
         }
         if (usersDTO.getPhoneNumber() != null) {
+            Optional<Users> userWithSamePhoneNumber = usersRepository.findByPhoneNumber(usersDTO.getPhoneNumber());
+            if (userWithSamePhoneNumber.isPresent() && !userWithSamePhoneNumber.get().getId().equals(id)) {
+                throw new ResourceConflictException("Phone number already exists for another user.");
+            }
             existingUser.setPhoneNumber(usersDTO.getPhoneNumber());
         }
-        // Optionally check for other fields if needed
-        // if (usersDTO.getRole() != null) {
-        //     existingUser.setRole(usersDTO.getRole());
-        // }
-        // if (usersDTO.getPassword() != null) {
-        //     existingUser.setPassword(usersDTO.getPassword());
-        // }
+
+
+        if (usersDTO.getName() != null) {
+            existingUser.setName(usersDTO.getName());
+        }
+
 
         Users updatedUser = usersRepository.save(existingUser);
         UsersMapper.mapToUsersDTO(updatedUser);
 
-        return "User updated successfully with ID: " + updatedUser.getId();
+        return "User updated successfully";
     }
 
+    @Transactional
     @Override
-    public  String deleteUser(Long id){
-          usersRepository.deleteById(id);
 
-          return  "User deleted successfully with ID:" + id;
-    }
+        public String deleteUser(Long id) {
+            Optional<Users> user = usersRepository.findById(id);
 
+            if (user.isEmpty()) {
+                return "User not Found";
+            }
+
+            boolean hasIssuedRecord = issuanceRepository.existsByUserIdAndStatus(id, "Issued");
+
+            if (hasIssuedRecord) {
+                throw new MethodNotFoundException("User cannot be deleted as it is currently issued.");
+            }
+
+            issuanceRepository.deleteByUserId(id);
+            usersRepository.deleteById(id);
+
+            return "User deleted successfully";
+        }
 
     @Override
    public Page<UsersOutDTO> getUsers(int page, int size, String search) {
-        Pageable pageable = PageRequest.of(page,size);
+        Pageable pageable = PageRequest.of(page,size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Users> usersPage;
         if(search!=null && !search.isEmpty()) {
             usersPage =  usersRepository.findByNameContainingIgnoreCaseAndRoleEquals(search,"USER",pageable);
@@ -176,7 +227,7 @@ public class UsersServiceImp implements IUsersService , UserDetailsService {
             return UsersMapper.maptoUsersOutDTO(user, usersRepository);
         } else {
             // If user is not present, throw an exception
-            throw new UsernameNotFoundException("User not found with phone number: " + number);
+            throw new MethodNotFoundException("User not found with phone number");
         }
 
 

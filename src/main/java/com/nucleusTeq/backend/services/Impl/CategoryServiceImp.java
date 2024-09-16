@@ -4,6 +4,9 @@ package com.nucleusTeq.backend.services.Impl;
 import com.nucleusTeq.backend.dto.CategoryDTO;
 import com.nucleusTeq.backend.entities.Books;
 import com.nucleusTeq.backend.entities.Category;
+import com.nucleusTeq.backend.exception.DataIntegrityViolationCustomException;
+import com.nucleusTeq.backend.exception.MethodNotFoundException;
+import com.nucleusTeq.backend.exception.ResourceConflictException;
 import com.nucleusTeq.backend.exception.ResourceNotFoundException;
 import com.nucleusTeq.backend.mapper.CategoryMapper;
 import com.nucleusTeq.backend.repositories.BooksRepository;
@@ -12,28 +15,32 @@ import com.nucleusTeq.backend.repositories.IssuanceRepository;
 import com.nucleusTeq.backend.services.ICategoryService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class CategoryServiceImp implements ICategoryService {
 
-    @Autowired
-    private CategoryRepository categoryRepository;
 
-    @Autowired
-    private BooksRepository booksRepository;
+    private final CategoryRepository categoryRepository;
 
-    @Autowired
-    private IssuanceRepository issuanceRepository;
+
+    private final BooksRepository booksRepository;
+
+
+    private final IssuanceRepository issuanceRepository;
 
     @Override
     public List<CategoryDTO> fetchCategories() {
@@ -50,27 +57,29 @@ public class CategoryServiceImp implements ICategoryService {
     }
 
     @Override
+    public String saveCategories(CategoryDTO categoryDTO) {
 
-    public String saveCategories(List<CategoryDTO> categoryDTOList) {
-        List<Category> categories = new ArrayList<>();
+        if (categoryRepository.existsByName(categoryDTO.getName())) {
+            throw new ResourceConflictException("Category already exists with name: " + categoryDTO.getName());
+        }
 
-        categoryDTOList.forEach(categoryDTO -> {
-            categories.add(CategoryMapper.maptoCategory(categoryDTO));
-        });
 
-        List<Category> savedCategories = categoryRepository.saveAll(categories);
+        Category categoryToSave = CategoryMapper.maptoCategory(categoryDTO);
 
-        return savedCategories.size() + "Categories are added";
+
+        categoryRepository.save(categoryToSave);
+
+        return "Category is added";
     }
 
-
+    @Transactional
     @Override
     public String deleteCategory(Long id) {
-
         Optional<Category> category = categoryRepository.findById(id);
         if (category.isEmpty()) {
-            return "Category not found";
+            throw new ResourceNotFoundException("Category not found ");
         }
+
 
         List<Books> booksInCategory = booksRepository.findByCategoryId(id);
 
@@ -79,34 +88,32 @@ public class CategoryServiceImp implements ICategoryService {
             return "Category deleted successfully";
         }
 
-
-
         boolean hasIssuedBooks = booksInCategory.stream()
-                        .anyMatch(book ->issuanceRepository.existsByBookIdAndStatus(book.getId(),"Issued"));
+                .anyMatch(book -> issuanceRepository.existsByBookIdAndStatus(book.getId(), "Issued"));
 
         if (hasIssuedBooks) {
-
-            return "Category cannot be deleted as some books under this category are currently issued.";
+            throw new MethodNotFoundException("Category cannot be deleted as some books under this category are currently issued.");
         }
 
-        booksInCategory.forEach(book ->
-                issuanceRepository.deleteByBookIdAndStatus(book.getId(), "Returned")
-        );
+        booksInCategory.forEach(book -> issuanceRepository.deleteByBookId(book.getId()));
 
         booksRepository.deleteAll(booksInCategory);
+
+
         categoryRepository.deleteById(id);
 
-        return "Category and all related books deleted successfully with ID: " + id;
+        return "Category and all related books deleted successfully";
     }
+
 
     @Override
     public Page<Category> getCategories(int page, int size, String search) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         if (search != null && !search.isEmpty()) {
-            // If search term is present, filter categories by name
+
             return categoryRepository.findByNameContainingIgnoreCase(search, pageable);
         } else {
-            // Otherwise, return all categories with pagination
+
             return categoryRepository.findAll(pageable);
         }
     }
@@ -134,9 +141,14 @@ public class CategoryServiceImp implements ICategoryService {
             existingCategory.setCategoryDesc(categoryDTO.getCategoryDesc());
             existingCategory.setName(categoryDTO.getName());
 
-            categoryRepository.save(existingCategory);
 
-            return  "Category updated successfully with ID: " + id;
+            try {
+                categoryRepository.save(existingCategory);
+                return "Category updated successfully ";
+            } catch (DataIntegrityViolationException ex) {
+
+                throw new ResourceConflictException("Category with the same name already exists");
+            }
         }else {
             throw  new ResourceNotFoundException("Book not fount with ID : "+ id);
         }

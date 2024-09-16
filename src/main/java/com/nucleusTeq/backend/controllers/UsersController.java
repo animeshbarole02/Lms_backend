@@ -1,6 +1,7 @@
 package com.nucleusTeq.backend.controllers;
 
 
+import com.nucleusTeq.backend.dto.ResponseDTO;
 import com.nucleusTeq.backend.dto.UserHistoryOutDTO;
 import com.nucleusTeq.backend.dto.UsersDTO;
 import com.nucleusTeq.backend.dto.UsersOutDTO;
@@ -17,6 +18,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static com.nucleusTeq.backend.constants.Constants.OK_STATUS;
 
 
 @RestController
@@ -39,12 +42,12 @@ public class UsersController {
 
     @CrossOrigin
     @PostMapping("/register")
-    public ResponseEntity<String> createUser(@RequestBody UsersDTO usersDTO){
+    public ResponseEntity<ResponseDTO> createUser(@RequestBody UsersDTO usersDTO){
 
-        System.out.println("Create");
+
          String response = iUsersService.createUser(usersDTO);
 
-        return  ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return  ResponseEntity.status(HttpStatus.CREATED).body(new ResponseDTO(OK_STATUS,response));
     }
 
     @GetMapping("/getAll")
@@ -67,17 +70,18 @@ public class UsersController {
 
     @CrossOrigin
     @PatchMapping("/update/{id}")
-    public ResponseEntity<String> updateUser(@PathVariable Long id, @RequestBody UsersDTO usersDTO) {
+    public ResponseEntity<ResponseDTO> updateUser(@PathVariable Long id, @RequestBody UsersDTO usersDTO) {
+
         String response =iUsersService.updateUser(id, usersDTO);
-        return  ResponseEntity.status(HttpStatus.OK).body(response);
+        return  ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(OK_STATUS,response));
     }
 
 
     @CrossOrigin
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ResponseDTO> deleteUser(@PathVariable Long id) {
         String response = iUsersService.deleteUser(id);
-        return  ResponseEntity.status(HttpStatus.OK).body(response);
+        return  ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(OK_STATUS,response));
     }
 
     @CrossOrigin
