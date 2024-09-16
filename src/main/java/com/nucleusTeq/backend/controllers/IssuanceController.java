@@ -15,6 +15,7 @@ import java.util.List;
 
 import static com.nucleusTeq.backend.constants.Constants.OK_STATUS;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping(value = "api/v1/issuances")
 public class IssuanceController {
@@ -28,21 +29,21 @@ public class IssuanceController {
          return  ResponseEntity.status(HttpStatus.OK).body(issuanceDTO);
     }
 
-    @CrossOrigin
+
     @PostMapping("/save")
     public  ResponseEntity<ResponseDTO> createIssuance(@Valid @RequestBody IssuanceDTO issuanceDTO) {
          String response = iIssuanceService.createIssuance(issuanceDTO);
          return  ResponseEntity.status(HttpStatus.CREATED).body(new ResponseDTO(OK_STATUS,response));
     }
 
-    @CrossOrigin
+
     @PatchMapping("/update/{id}")
     public ResponseEntity<ResponseDTO> updateIssuance(@PathVariable Long id, @Valid @RequestBody IssuanceDTO issuanceDTO) {
         String response = iIssuanceService.updateIssuance(id, issuanceDTO);
         return  ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(OK_STATUS,response));
     }
 
-    @CrossOrigin
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseDTO> deleteIssuance(@PathVariable Long id) {
         String response = iIssuanceService.deleteIssuance(id);
@@ -54,7 +55,7 @@ public class IssuanceController {
         return  "User History only Acceccible by User";
     }
 
-    @CrossOrigin
+
     @GetMapping("/list")
     public ResponseEntity<Page<IssuanceOutDTO>> getAllIssuances(
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -66,7 +67,7 @@ public class IssuanceController {
     }
 
 
-    @CrossOrigin
+
     @GetMapping("/count")
     public ResponseEntity<Long> getIssuanceCount() {
         Long count = iIssuanceService.getIssuanceCount();
@@ -74,7 +75,7 @@ public class IssuanceController {
     }
 
 
-    @CrossOrigin
+
     @GetMapping("/userIssuanceDetails")
     public  ResponseEntity<Page<UserHistoryOutDTO>> getIssuanceDetailsByUserId(
             @RequestParam(value = "userId") Long userId,
@@ -88,7 +89,7 @@ public class IssuanceController {
         return  ResponseEntity.status(HttpStatus.OK).body(userHistoryOutDTOS);
     }
 
-    @CrossOrigin
+
     @GetMapping("/bookIssuanceDetails")
     public  ResponseEntity<Page<BookHistoryOutDTO>> getIssuanceDetailsByBookId(
             @RequestParam(value = "bookId") Long bookId,

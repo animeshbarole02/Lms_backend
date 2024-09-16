@@ -15,6 +15,7 @@ import java.util.List;
 
 import static com.nucleusTeq.backend.constants.Constants.OK_STATUS;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping(value = "api/v1/books")
 public class BooksController {
@@ -24,7 +25,7 @@ public class BooksController {
     private IBooksService iBooksService;
 
 
-    @CrossOrigin
+
     @PostMapping("/create")
     public ResponseEntity<ResponseDTO> createBook(@RequestBody BooksDTO booksDTO){
 
@@ -35,7 +36,7 @@ public class BooksController {
     }
 
 
-    @CrossOrigin
+
     @PatchMapping("/update/{id}")
     public  ResponseEntity<ResponseDTO> updateBook(@PathVariable Long id , @RequestBody BooksDTO booksDTO) {
 
@@ -45,14 +46,14 @@ public class BooksController {
 
     }
 
-    @CrossOrigin
+
     @DeleteMapping("/delete/{id}")
     public  ResponseEntity<ResponseDTO> deleteBook(@PathVariable Long id) {
         String message = iBooksService.deleteBook(id);
         return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(OK_STATUS,message));
     }
 
-    @CrossOrigin
+
     @GetMapping("/list")
     public Page<BooksOutDTO> getBooks(
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -63,7 +64,7 @@ public class BooksController {
     }
 
 
-    @CrossOrigin
+
     @GetMapping("/getByTitle/{title}")
         public ResponseEntity<BooksOutDTO> getBookByTitle(@PathVariable String title) {
 
@@ -73,7 +74,7 @@ public class BooksController {
         }
 
 
-    @CrossOrigin
+
     @GetMapping("/count")
     public ResponseEntity<Long> getTotalBookCount() {
         long count = iBooksService.getTotalBookCount();
@@ -81,7 +82,7 @@ public class BooksController {
     }
 
 
-    @CrossOrigin
+
     @GetMapping("/suggestions")
     public List<Books> getBookSuggestions(@RequestParam String searchTerm) {
         return iBooksService.findBooksByTitleContaining(searchTerm);

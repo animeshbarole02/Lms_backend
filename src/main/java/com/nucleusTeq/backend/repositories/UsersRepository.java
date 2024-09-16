@@ -13,8 +13,7 @@ public interface UsersRepository extends JpaRepository<Users,Long> {
 
     Optional<Users> findByEmail(String email);
     Optional<Users> findByPhoneNumber(String phoneNumber);
-
-   Page<Users> findByNameContainingIgnoreCaseAndRoleEquals(String search, String role,Pageable pageable);
+    Page<Users> findByNameContainingIgnoreCaseAndRoleEquals(String search, String role,Pageable pageable);
     Page<Users> findByRoleEquals(String role, Pageable pageable);
-    Optional<Users> findByName(String name);
+
 }

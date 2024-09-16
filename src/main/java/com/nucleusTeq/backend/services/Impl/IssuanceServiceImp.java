@@ -7,7 +7,6 @@ import com.nucleusTeq.backend.dto.UserHistoryOutDTO;
 import com.nucleusTeq.backend.entities.Books;
 import com.nucleusTeq.backend.entities.Issuance;
 import com.nucleusTeq.backend.entities.Users;
-import com.nucleusTeq.backend.exception.MethodNotFoundException;
 import com.nucleusTeq.backend.exception.ResourceNotFoundException;
 import com.nucleusTeq.backend.mapper.HistoryMapper;
 import com.nucleusTeq.backend.mapper.IssuanceMapper;
@@ -17,18 +16,16 @@ import com.nucleusTeq.backend.repositories.IssuanceRepository;
 import com.nucleusTeq.backend.repositories.UsersRepository;
 import com.nucleusTeq.backend.services.IIssuanceService;
 import com.nucleusTeq.backend.services.ISMSService;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor

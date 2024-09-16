@@ -25,7 +25,7 @@ public class AuthService implements IAuthService {
     private JwtUtils jwtUtils;
 
     @Autowired
-    private IUsersService usersService; // Use interface for service dependency
+    private IUsersService usersService;
 
     @Autowired
     private AuthenticationManager authenticationManager;

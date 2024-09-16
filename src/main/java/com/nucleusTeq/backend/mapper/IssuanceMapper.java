@@ -52,12 +52,11 @@ public class IssuanceMapper {
         issuanceOutDTO.setStatus(issuance.getStatus());
         issuanceOutDTO.setIssuanceType(issuance.getIssuanceType());
 
-        // Fetch Book details using bookId
+
         Books book = bookRepository.findById(issuance.getBookId())
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found for this id :: " + issuance.getBookId()));
         issuanceOutDTO.setBook(book);
 
-        // Fetch User details using userId
         Users user = userRepository.findById(issuance.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found for this id :: " + issuance.getUserId()));
         issuanceOutDTO.setUser(user);

@@ -12,10 +12,7 @@ import com.nucleusTeq.backend.repositories.UsersRepository;
 import com.nucleusTeq.backend.services.ISMSService;
 import com.nucleusTeq.backend.services.IUsersService;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -74,8 +71,8 @@ public class UsersServiceImp implements IUsersService , UserDetailsService {
                 savedUser.getPhoneNumber(),
                 savedUser.getEmail(),
                 Password);
-          ismsService.verifyNumber(savedUser.getPhoneNumber());
-         ismsService.sendSms(savedUser.getPhoneNumber(), message);
+        ismsService.verifyNumber(savedUser.getPhoneNumber());
+        ismsService.sendSms(savedUser.getPhoneNumber(), message);
 
         return "User added successfully ";
 
@@ -199,12 +196,12 @@ public class UsersServiceImp implements IUsersService , UserDetailsService {
     public Users getByUserName(String name) {
         Users user;
         if (name.contains("@")) {
-//            email
+
             user = usersRepository.findByEmail(name).orElseThrow(
                     () -> new UsernameNotFoundException("User not found for " + name)
             );
         } else {
-//            mobile
+
             user = usersRepository.findByPhoneNumber(name).orElseThrow(
                     () -> new UsernameNotFoundException("User not found for " + name)
             );
@@ -220,13 +217,12 @@ public class UsersServiceImp implements IUsersService , UserDetailsService {
 
         Optional<Users> userOptional = usersRepository.findByPhoneNumber(number);
 
-        // Check if the user is present
         if (userOptional.isPresent()) {
-            // If user is present, convert to UsersOutDTO and return
+
             Users user = userOptional.get();
             return UsersMapper.maptoUsersOutDTO(user, usersRepository);
         } else {
-            // If user is not present, throw an exception
+
             throw new MethodNotFoundException("User not found with phone number");
         }
 

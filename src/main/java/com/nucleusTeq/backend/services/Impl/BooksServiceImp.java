@@ -39,8 +39,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class BooksServiceImp implements IBooksService {
 
-
-
     private final IssuanceRepository issuanceRepository;
 
 
@@ -136,7 +134,7 @@ public class BooksServiceImp implements IBooksService {
             booksPage = booksRepository.findAll(pageable);
         }
 
-        // Map the Page<Books> to Page<BooksOutDTO> using the mapper and pass categoryRepository
+
         return booksPage.map(books -> BooksMapper.mapToBooksOutDTO(books, categoryRepository));
     }
 
@@ -146,11 +144,11 @@ public class BooksServiceImp implements IBooksService {
         Optional<Books> booksOptional = booksRepository.findByTitle(title);
 
         if (booksOptional.isPresent()) {
-            // If user is present, convert to UsersOutDTO and return
+
             Books book = booksOptional.get();
             return BooksMapper.mapToBooksOutDTO(book, categoryRepository);
         } else {
-            // If user is not present, throw an exception
+
             throw new UsernameNotFoundException("Book not found with title: " + title);
         }
 

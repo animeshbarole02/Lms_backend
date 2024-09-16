@@ -11,11 +11,10 @@ import java.util.Objects;
 
 public class UsersMapper {
 
-    // Private constructor to prevent instantiation
+
     private UsersMapper() {
     }
 
-    // Method to map from Users entity to UsersDTO
     public static UsersDTO mapToUsersDTO(Users users) {
         UsersDTO usersDTO = new UsersDTO();
         usersDTO.setId(users.getId());
@@ -27,7 +26,7 @@ public class UsersMapper {
         return usersDTO;
     }
 
-    // Method to map from UsersDTO to Users entity
+
     public static Users mapToUsers(UsersDTO usersDTO) {
         Users users = new Users();
         users.setId(usersDTO.getId());

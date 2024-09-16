@@ -1,18 +1,12 @@
 package com.nucleusTeq.backend.controllers;
-
 import com.nucleusTeq.backend.dto.LoginDTO;
-
 import com.nucleusTeq.backend.dto.UsersDTO;
-import com.nucleusTeq.backend.dto.UsersOutDTO;
 import com.nucleusTeq.backend.entities.Users;
 import com.nucleusTeq.backend.jwt.JwtUtils;
 import com.nucleusTeq.backend.jwt.LoginResponse;
-
 import com.nucleusTeq.backend.mapper.UsersMapper;
-import com.nucleusTeq.backend.repositories.UsersRepository;
 import com.nucleusTeq.backend.services.IUsersService;
 import com.nucleusTeq.backend.services.Impl.AuthService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +16,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping(value = "api/v1")
 public class LoginController {
@@ -35,16 +29,13 @@ public class LoginController {
     private IUsersService iUsersService;
 
     @Autowired
-    private UsersRepository usersRepository;
-
-    @Autowired
     private AuthService authService; // Use AuthService instead of directly using service implementations
 
-    @CrossOrigin
+
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginDTO loginDTO) {
         try {
-            // Delegate authentication logic to the AuthService
+
             String decodedPassword = new String(Base64.getDecoder().decode(loginDTO.getPassword()));
             loginDTO.setPassword(decodedPassword);
             LoginResponse response = authService.authenticateUser(loginDTO);
@@ -57,7 +48,7 @@ public class LoginController {
         }
     }
 
-    @CrossOrigin
+
     @GetMapping("/currentUser")
     public ResponseEntity<UsersDTO> currentUser(@RequestHeader("Authorization") String token) {
         String jwtToken = token.replace("Bearer ", "");

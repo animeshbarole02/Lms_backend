@@ -29,7 +29,7 @@ public class SMSService implements ISMSService {
     public void verifyNumber(String number) {
         try {
 
-            // Ensure the phone number is in E.164 format
+
             if (!number.startsWith("+")) {
                 number = "+91" + number;
             }

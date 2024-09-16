@@ -15,5 +15,5 @@ public class ErrorResponseDTO {
 
 
 
-        // Getters and setters
+
 }

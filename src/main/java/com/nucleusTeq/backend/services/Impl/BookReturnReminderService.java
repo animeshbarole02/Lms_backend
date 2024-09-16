@@ -8,12 +8,9 @@ import com.nucleusTeq.backend.repositories.IssuanceRepository;
 import com.nucleusTeq.backend.repositories.UsersRepository;
 import com.nucleusTeq.backend.services.IBookReturnReminderService;
 import com.nucleusTeq.backend.services.ISMSService;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import java.awt.print.Book;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +27,7 @@ public class BookReturnReminderService implements IBookReturnReminderService {
 //    @Scheduled(cron = "0 0 15 * * *", zone = "Asia/Kolkata")
 
     @Override
-    @Scheduled(cron = "0 * * * * *", zone = "Asia/Kolkata")
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Kolkata")
     public void sendReturnRemainder() {
         LocalDateTime startOfTomorrow = LocalDateTime.now().plusDays(1).toLocalDate().atStartOfDay();
         LocalDateTime endOfTomorrow = startOfTomorrow.plusDays(1).minusSeconds(1);
@@ -52,7 +49,7 @@ public class BookReturnReminderService implements IBookReturnReminderService {
                                 "by tomorrow (%s).",
                         book.getTitle(), book.getAuthor(), issuance.getExpectedReturn().toLocalDate());
 
-              //  ismsService.sendSms(user.getPhoneNumber(), message);
+                ismsService.sendSms(user.getPhoneNumber(), message);
                 System.out.println(dueTomorrow);
             } else {
                 System.out.println("Book not found for Issuance ID: " + issuance.getId());

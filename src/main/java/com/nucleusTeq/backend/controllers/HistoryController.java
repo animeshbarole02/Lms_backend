@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping(value = "api/v1/user")
 public class HistoryController {
@@ -18,7 +18,7 @@ public class HistoryController {
     @Autowired
     private IIssuanceService iIssuanceService;
 
-    @CrossOrigin
+
     @GetMapping("/details")
     public ResponseEntity<Page<UserHistoryOutDTO>> getIssuanceDetailsByUserId(
             @RequestParam(value = "userId") Long userId,

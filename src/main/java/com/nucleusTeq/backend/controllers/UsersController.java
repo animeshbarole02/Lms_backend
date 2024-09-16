@@ -21,11 +21,9 @@ import java.util.List;
 
 import static com.nucleusTeq.backend.constants.Constants.OK_STATUS;
 
-
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping(value = "api/v1/users")
-
-
 public class UsersController {
 
 
@@ -40,7 +38,7 @@ public class UsersController {
 
 
 
-    @CrossOrigin
+
     @PostMapping("/register")
     public ResponseEntity<ResponseDTO> createUser(@RequestBody UsersDTO usersDTO){
 
@@ -68,7 +66,6 @@ public class UsersController {
     }
 
 
-    @CrossOrigin
     @PatchMapping("/update/{id}")
     public ResponseEntity<ResponseDTO> updateUser(@PathVariable Long id, @RequestBody UsersDTO usersDTO) {
 
@@ -77,14 +74,14 @@ public class UsersController {
     }
 
 
-    @CrossOrigin
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<ResponseDTO> deleteUser(@PathVariable Long id) {
         String response = iUsersService.deleteUser(id);
         return  ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(OK_STATUS,response));
     }
 
-    @CrossOrigin
+
     @GetMapping("/list")
     public ResponseEntity<Page<UsersOutDTO>> getUsersByList(
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -99,7 +96,7 @@ public class UsersController {
 
 
 
-    @CrossOrigin
+
     @GetMapping("/number/{number}")
     public  ResponseEntity<UsersOutDTO> getUserByMobile(@PathVariable String number) {
 
@@ -109,7 +106,7 @@ public class UsersController {
     }
 
 
-    @CrossOrigin
+
     @GetMapping("/count")
     public ResponseEntity<Long> getUserCount() {
         long count = iUsersService.getUserCount();

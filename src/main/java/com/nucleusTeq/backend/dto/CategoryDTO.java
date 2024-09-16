@@ -20,10 +20,4 @@ public class CategoryDTO {
 
     @NotEmpty(message = "Category Description cannot be Empty")
     private String categoryDesc;
-
-
-
-
-
-    // Getters and Setters (optional)
 }
