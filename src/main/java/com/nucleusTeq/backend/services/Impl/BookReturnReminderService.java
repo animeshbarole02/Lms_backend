@@ -52,7 +52,7 @@ public class BookReturnReminderService implements IBookReturnReminderService {
                                 "by tomorrow (%s).",
                         book.getTitle(), book.getAuthor(), issuance.getExpectedReturn().toLocalDate());
 
-                ismsService.sendSms(user.getPhoneNumber(), message);
+              //  ismsService.sendSms(user.getPhoneNumber(), message);
                 System.out.println(dueTomorrow);
             } else {
                 System.out.println("Book not found for Issuance ID: " + issuance.getId());
